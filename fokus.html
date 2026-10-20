@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FocusSmart AI - Classroom Monitor</title>
+
+<style>
+:root {
+  --green:#27d6a0;
+  --bg:#09121d;
+  --panel:#111f2e;
+  --text:#e9f3ff;
+  --muted:#91a5b9;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+}
+header {
+  padding:22px;
+  background:#102537;
+  border-bottom:1px solid #263d50;
+}
+header h1 { margin:0 0 7px; }
+header p { margin:0;color:var(--muted); }
+main {
+  width:94%;
+  max-width:1100px;
+  margin:22px auto;
+}
+.panel {
+  background:var(--panel);
+  padding:18px;
+  border:1px solid #293b4d;
+  border-radius:16px;
+  margin-bottom:18px;
+}
+.stage {
+  position:relative;
+  overflow:hidden;
+  width:100%;
+  background:#03080e;
+  border-radius:12px;
+}
+video {
+  display:block;
+  width:100%;
+  height:auto;
+  transform:scaleX(-1);
+}
+canvas {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  transform:scaleX(-1);
+}
+button,select {
+  padding:12px 15px;
+  border:0;
+  border-radius:9px;
+  font-size:15px;
+}
+button {
+  background:var(--green);
+  color:#05251b;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled { opacity:.5;cursor:wait; }
+.controls {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+#status {
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.6;
+}
+.stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.stat {
+  background:#0b1825;
+  padding:15px;
+  border-radius:12px;
+}
+.stat strong {
+  display:block;
+  font-size:27px;
+  margin-top:8px;
+}
+.label { color:var(--muted);font-size:13px; }
+table { width:100%;border-collapse:collapse; }
+th,td {
+  text-align:left;
+  padding:12px 8px;
+  border-bottom:1px solid #293b4d;
+  font-size:13px;
+}
+th { color:var(--muted); }
+.tag {
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:7px;
+  background:#243747;
+}
+.note {
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+@media(max-width:560px) {
+  .stats { grid-template-columns:1fr; }
+  th,td { padding:9px 4px;font-size:11px; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>◉ FocusSmart AI</h1>
+  <p>Classroom visual-attention prototype</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Kamera Kelas</h2>
+    <p class="note">
+      Posisikan kamera menghadap kelas dengan pencahayaan cukup.
+      Sistem memperkirakan arah wajah dan mata yang terlihat.
+    </p>
+
+    <div class="stage">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="start">Aktifkan Kamera</button>
+      <button id="stop" disabled>Hentikan</button>
+    </div>
+    <p id="status">Memuat model AI. Mohon tunggu...</p>
+  </section>
+
+  <section class="panel">
+    <h2>Ringkasan Deteksi</h2>
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Wajah terdeteksi</span>
+        <strong id="total">0</strong>
+      </div>
+      <div class="stat">
+        <span class="label">Menghadap depan*</span>
+        <strong id="front">0</strong>
+      </div>
+      <div class="stat">
+        <span class="label">Arah lain/tidak pasti</span>
+        <strong id="other">0</strong>
+      </div>
+    </div>
+    <p class="note">
+      *Menghadap depan bukan bukti bahwa seseorang sedang
+      memperhatikan atau memahami pelajaran.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Hasil Per Wajah</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>ID sementara</th>
+            <th>Arah kepala</th>
+            <th>Perkiraan mata</th>
+            <th>Indikator visual</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="4">Belum ada wajah terdeteksi.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      ID adalah urutan wajah pada frame saat ini, bukan identitas
+      siswa, dan dapat berubah ketika posisi siswa berubah.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h3>Batasan dan privasi</h3>
+    <p class="note">
+      Ini adalah perkiraan geometris, bukan pengukuran perhatian
+      yang tervalidasi. Sistem tidak mengetahui isi pikiran siswa.
+      Video diproses di browser dan tidak disimpan atau diunggah
+      oleh kode ini. Model dan library diunduh dari internet.
+      Gunakan dengan persetujuan sekolah, guru, siswa, serta orang
+      tua sesuai aturan yang berlaku. Jangan gunakan hasilnya untuk
+      memberi nilai atau menghukum siswa.
+    </p>
+  </section>
+</main>
+
+<script type="module">
+import {
+  FaceLandmarker,
+  FilesetResolver
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+const startBtn = document.getElementById("start");
+const stopBtn = document.getElementById("stop");
+
+let landmarker = null;
+let stream = null;
+let running = false;
+let busy = false;
+let lastVideoTime = -1;
+
+const MODEL =
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
+function point(lm, i) {
+  return lm[i];
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function average(points) {
+  return {
+    x: points.reduce((s,p) => s + p.x, 0) / points.length,
+    y: points.reduce((s,p) => s + p.y, 0) / points.length
+  };
+}
+
+// Perkiraan yaw berdasarkan posisi hidung relatif terhadap
+// bagian tengah wajah. Bukan sudut kepala yang terkalibrasi.
+function estimateHead(lm) {
+  const left = point(lm, 234);
+  const right = point(lm, 454);
+  const nose = point(lm, 1);
+  const eyeMid = average([point(lm, 33), point(lm, 263)]);
+  const faceWidth = distance(left, right);
+
+  if (faceWidth < 0.001) return "Tidak pasti";
+
+  const horizontal = (nose.x - eyeMid.x) / faceWidth;
+
+  // Tanda arah dapat dipengaruhi orientasi kamera dan posisi wajah.
+  if (horizontal > 0.12) return "Menoleh ke kiri layar";
+  if (horizontal < -0.12) return "Menoleh ke kanan layar";
+
+  const eyeLine = average([point(lm, 33), point(lm, 263)]);
+  const mouth = point(lm, 13);
+  const vertical = (nose.y - eyeLine.y) /
+    Math.max(0.001, distance(eyeLine, mouth));
+
+  if (vertical > 0.55) return "Kepala cenderung menunduk";
+  if (vertical < 0.12) return "Kepala cenderung terangkat";
+
+  return "Relatif menghadap depan";
+}
+
+// Iris indices tersedia pada model Face Landmarker dengan
+// landmark wajah lengkap. Hanya perkiraan arah horizontal.
+function estimateGaze(lm) {
+  if (lm.length < 478) return "Mata tidak tersedia";
+
+  function eyeRatio(irisIndices, cornerA, cornerB) {
+    const iris = average(irisIndices.map(i => point(lm, i)));
+    const a = point(lm, cornerA);
+    const b = point(lm, cornerB);
+    const width = Math.abs(b.x - a.x);
+
+    if (width < 0.001) return null;
+
+    return (iris.x - Math.min(a.x, b.x)) / width;
+  }
+
+  const left = eyeRatio([468,469,470,471,472], 33, 133);
+  const right = eyeRatio([473,474,475,476,477], 362, 263);
+
+  if (left === null || right === null) return "Tidak pasti";
+
+  const ratio = (left + right) / 2;
+
+  // Ambang konservatif karena perspektif kamera kelas beragam.
+  if (ratio < 0.32) return "Ke sisi mata";
+  if (ratio > 0.68) return "Ke sisi mata";
+  return "Kurang lebih tengah";
+}
+
+function drawFace(lm, id, w, h, head, gaze) {
+  const xs = lm.map(p => p.x * w);
+  const ys = lm.map(p => p.y * h);
+
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  const rw = Math.max(...xs) - x;
+  const rh = Math.max(...ys) - y;
+
+  ctx.strokeStyle = "#27d6a0";
+  ctx.lineWidth = Math.max(2, w / 500);
+  ctx.strokeRect(x, y, rw, rh);
+
+  ctx.fillStyle = "#102537";
+  ctx.fillRect(x, Math.max(0, y - 24), 160, 24);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 14px Arial";
+  ctx.fillText("Wajah " + id, x + 6, Math.max(16, y - 7));
+
+  // Titik mata dan hidung.
+  for (const i of [33, 133, 263, 362, 1]) {
+    ctx.beginPath();
+    ctx.arc(lm[i].x * w, lm[i].y * h, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffdf68";
+    ctx.fill();
+  }
+}
+
+function renderRows(faces) {
+  const rows = document.getElementById("rows");
+
+  if (!faces.length) {
+    rows.innerHTML =
+      '<tr><td colspan="4">Belum ada wajah terdeteksi.</td></tr>';
+    return;
+  }
+
+  rows.replaceChildren();
+
+  faces.forEach((face, index) => {
+    const tr = document.createElement("tr");
+    const values = [
+      "Wajah " + (index + 1),
+      face.head,
+      face.gaze,
+      face.head === "Relatif menghadap depan"
+        ? "Arah depan teramati"
+        : "Arah berubah / perlu ditinjau"
+    ];
+
+    values.forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+
+    rows.appendChild(tr);
+  });
+}
+
+async function setup() {
+  statusEl.textContent = "Mengunduh model pengenalan wajah...";
+
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+
+  landmarker = await FaceLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: MODEL,
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    numFaces: 20,
+    outputFaceBlendshapes: false,
+    outputFacialTransformationMatrixes: false
+  });
+
+  statusEl.textContent = "Model siap. Aktifkan kamera untuk memulai.";
+  startBtn.disabled = false;
+}
+
+async function startCamera() {
+  try {
+    startBtn.disabled = true;
+    statusEl.textContent = "Meminta izin kamera...";
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    running = true;
+    stopBtn.disabled = false;
+    statusEl.textContent =
+      "Kamera aktif. Analisis arah wajah berjalan.";
+
+    requestAnimationFrame(loop);
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent =
+      "Kamera gagal dibuka. Gunakan HTTPS dan izinkan akses kamera.";
+    startBtn.disabled = false;
+  }
+}
+
+function stopCamera() {
+  running = false;
+  busy = false;
+
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+
+  video.srcObject = null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  document.getElementById("total").textContent = "0";
+  document.getElementById("front").textContent = "0";
+  document.getElementById("other").textContent = "0";
+  document.getElementById("rows").innerHTML =
+    '<tr><td colspan="4">Kamera dihentikan.</td></tr>';
+
+  startBtn.disabled = !landmarker;
+  stopBtn.disabled = true;
+  statusEl.textContent = "Kamera dihentikan.";
+}
+
+async function loop() {
+  if (!running) return;
+
+  requestAnimationFrame(loop);
+
+  if (busy || video.readyState < 2 ||
+      video.currentTime === lastVideoTime) return;
+
+  busy = true;
+  lastVideoTime = video.currentTime;
+
+  try {
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    const result = landmarker.detectForVideo(
+      video,
+      performance.now()
+    );
+
+    ctx.clearRect(0, 0, w, h);
+
+    const faces = (result.faceLandmarks || []).map(lm => ({
+      landmarks: lm,
+      head: estimateHead(lm),
+      gaze: estimateGaze(lm)
+    }));
+
+    faces.forEach((face, i) =>
+      drawFace(face.landmarks, i + 1, w, h, face.head, face.gaze)
+    );
+
+    document.getElementById("total").textContent = faces.length;
+
+    const front = faces.filter(
+      f => f.head === "Relatif menghadap depan"
+    ).length;
+
+    document.getElementById("front").textContent = front;
+    document.getElementById("other").textContent =
+      faces.length - front;
+
+    renderRows(faces);
+
+    statusEl.textContent =
+      "Berjalan real-time · " + faces.length +
+      " wajah terdeteksi · pemrosesan lokal";
+  } catch (error) {
+    console.error(error);
+    statusEl.textContent =
+      "Pemrosesan terganggu. Periksa kemampuan perangkat.";
+  } finally {
+    busy = false;
+  }
+}
+
+startBtn.disabled = true;
+stopBtn.addEventListener("click", stopCamera);
+startBtn.addEventListener("click", startCamera);
+
+try {
+  await setup();
+} catch (error) {
+  console.error(error);
+  statusEl.textContent =
+    "Model gagal dimuat. Periksa koneksi internet atau coba perangkat lain.";
+}
+
+window.addEventListener("pagehide", stopCamera);
+</script>
+</body>
+</html>
