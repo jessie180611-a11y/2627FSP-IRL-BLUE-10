@@ -1,0 +1,340 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SortSmart AI</title>
+
+  <!-- Library AI -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f7f1;
+      color: #203b2b;
+      text-align: center;
+    }
+
+    header {
+      background: #176b45;
+      color: white;
+      padding: 25px 15px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    header p {
+      margin: 0;
+    }
+
+    main {
+      width: 92%;
+      max-width: 520px;
+      margin: 25px auto;
+    }
+
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px #00000010;
+      margin-bottom: 18px;
+    }
+
+    video {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      background: #18251c;
+      border-radius: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #218653;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #a8b8ad;
+      cursor: not-allowed;
+    }
+
+    #result {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #edf5ee;
+    }
+
+    #category {
+      font-size: 25px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    #confidence {
+      font-size: 14px;
+      color: #52675a;
+    }
+
+    #status {
+      font-size: 14px;
+      color: #52675a;
+      margin-top: 12px;
+    }
+
+    .bin {
+      font-size: 45px;
+      margin: 8px;
+    }
+
+    footer {
+      padding: 20px;
+      font-size: 12px;
+      color: #617266;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>♻️ SortSmart AI</h1>
+    <p>Kenali sampah, jaga lingkungan!</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>📷 Pemindai Sampah</h2>
+      <p>Arahkan kamera ke satu benda sampah.</p>
+
+      <video id="camera" autoplay playsinline muted></video>
+
+      <button id="startButton" onclick="startCamera()">
+        Aktifkan Kamera
+      </button>
+
+  <p id="status">Menyiapkan kamera dan AI...</p>
+
+      <p id="status">Menunggu kamera dan model AI...</p>
+    </section>
+
+    <section class="panel">
+      <h2>Hasil Deteksi</h2>
+
+      <div id="result" aria-live="polite">
+        <div class="bin">🗑️</div>
+        <div id="category">Belum terdeteksi</div>
+        <p id="advice">
+          Hasil deteksi akan muncul di sini.
+        </p>
+        <p id="confidence"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    SortSmart AI — Prototype Pemilahan Sampah Pintar
+  </footer>
+
+  <script>
+    
+const MODEL_URL = "MASUKKAN_URL_MODEL_KAMU/";
+
+let model = null;
+let stream = null;
+let detecting = false;
+let busy = false;
+let lastPrediction = 0;
+
+const camera = document.getElementById("camera");
+const startButton = document.getElementById("startButton");
+const statusText = document.getElementById("status");
+
+async function loadModel() {
+  try {
+    if (MODEL_URL.includes("MASUKKAN_URL")) {
+      statusText.textContent =
+        "Masukkan URL model AI terlebih dahulu.";
+      return;
+    }
+
+    statusText.textContent = "Memuat model AI...";
+
+    model = await tmImage.load(
+      MODEL_URL + "model.json",
+      MODEL_URL + "metadata.json"
+    );
+
+    statusText.textContent = stream
+      ? "AI aktif! Tunjukkan sampah ke kamera."
+      : "AI siap. Aktifkan kamera untuk mulai.";
+
+    if (stream) startDetection();
+  } catch (error) {
+    console.error(error);
+    statusText.textContent =
+      "Model gagal dimuat. Periksa URL dan internet.";
+  }
+}
+
+async function startCamera() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Kamera memerlukan HTTPS atau localhost.");
+    }
+
+    statusText.textContent = "Meminta izin kamera...";
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" }
+      },
+      audio: false
+    });
+
+    camera.srcObject = stream;
+    await camera.play();
+
+    startButton.textContent = "Kamera Aktif";
+    startButton.disabled = true;
+
+    if (model) {
+      startDetection();
+    } else {
+      statusText.textContent =
+        "Kamera aktif. Menunggu model AI...";
+    }
+  } catch (error) {
+    console.error(error);
+    statusText.textContent =
+      "Kamera gagal dibuka. Periksa izin kamera dan gunakan HTTPS.";
+  }
+}
+
+function startDetection() {
+  if (detecting || !model || !stream) return;
+
+  detecting = true;
+  statusText.textContent =
+    "AI aktif! Arahkan sampah ke kamera.";
+
+  requestAnimationFrame(detectionLoop);
+}
+
+async function detectionLoop(timestamp) {
+  if (!detecting) return;
+
+  requestAnimationFrame(detectionLoop);
+
+  // Prediksi setiap sekitar 300 milidetik agar perangkat
+  // tidak terlalu terbebani.
+  if (
+    busy ||
+    timestamp - lastPrediction < 300 ||
+    camera.readyState < 2
+  ) {
+    return;
+  }
+
+  busy = true;
+  lastPrediction = timestamp;
+
+  try {
+    const predictions = await model.predict(camera);
+
+    predictions.sort(
+      (a, b) => b.probability - a.probability
+    );
+
+    const best = predictions[0];
+    const label = best.className
+      .toLowerCase()
+      .trim()
+      .replace(/[_-]+/g, " ");
+
+    const confidence = best.probability;
+
+    document.getElementById("confidence").textContent =
+      "Keyakinan AI: " +
+      (confidence * 100).toFixed(1) + "%";
+
+    // Periksa ANORGANIK lebih dahulu agar tidak salah
+    // terbaca sebagai ORGANIK.
+    if (confidence < 0.65) {
+      showResult(
+        "Belum yakin",
+        "Dekatkan sampah ke kamera dan coba lagi.",
+        "❔"
+      );
+    } else if (
+      label.includes("anorganik") ||
+      label.includes("an organic") ||
+      label.includes("inorganic") ||
+      label.includes("non organic")
+    ) {
+      showResult(
+        "SAMPAH ANORGANIK",
+        "Pilih tempat sampah anorganik yang sesuai.",
+        "♻️"
+      );
+    } else if (
+      label.includes("organik") ||
+      label.includes("organic")
+    ) {
+      showResult(
+        "SAMPAH ORGANIK",
+        "Pilih tempat sampah organik.",
+        "🍃"
+      );
+    } else {
+      showResult(
+        "Kelas tidak dikenali",
+        "Gunakan nama kelas Organik dan Anorganik.",
+        "❔"
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    statusText.textContent = "Terjadi kesalahan saat mendeteksi.";
+  } finally {
+    busy = false;
+  }
+}
+
+function showResult(category, advice, emoji) {
+  document.querySelector(".bin").textContent = emoji;
+  document.getElementById("category").textContent = category;
+  document.getElementById("advice").textContent = advice;
+}
+
+loadModel();
+
+window.addEventListener("pagehide", () => {
+  detecting = false;
+
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+});
+  </script>
+</body>
+</html>
