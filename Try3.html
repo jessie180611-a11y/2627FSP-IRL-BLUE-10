@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SortSmart AI - Object Detector</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      color: #183b2a;
+      background: #f0f7f1;
+    }
+
+    header {
+      padding: 24px 12px;
+      background: #176b45;
+      color: white;
+    }
+
+    main {
+      width: 92%;
+      max-width: 600px;
+      margin: 22px auto;
+    }
+
+    .panel {
+      padding: 18px;
+      background: white;
+      border-radius: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 15px #0001;
+    }
+
+    #stage {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #17251b;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+      background: #218653;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: .5;
+    }
+
+    #result {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #details, #status {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>♻️ SortSmart AI</h1>
+  <p>Pendeteksi benda otomatis berbasis kamera</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h3>📷 Kamera AI</h3>
+
+    <div id="stage">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <button id="start" disabled>Memuat AI...</button>
+    <p id="status">Sedang mengunduh model AI...</p>
+  </section>
+
+  <section class="panel">
+    <h3>Hasil Deteksi</h3>
+    <div id="result">Menunggu benda...</div>
+    <p id="details">
+      Arahkan kamera ke benda agar AI mengenalinya.
+    </p>
+  </section>
+</main>
+
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const startBtn = document.getElementById("start");
+const statusText = document.getElementById("status");
+const resultText = document.getElementById("result");
+const detailsText = document.getElementById("details");
+
+let model;
+let stream;
+let running = false;
+let busy = false;
+
+async function loadAI() {
+  try {
+    model = await cocoSsd.load({
+      base: "lite_mobilenet_v2"
+    });
+
+    startBtn.disabled = false;
+    startBtn.textContent = "Aktifkan Kamera";
+    statusText.textContent = "AI siap digunakan.";
+  } catch (error) {
+    console.error(error);
+    statusText.textContent =
+      "Model gagal dimuat. Periksa koneksi internet.";
+  }
+}
+
+startBtn.onclick = async () => {
+  if (running) return;
+
+  startBtn.disabled = true;
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    running = true;
+    startBtn.textContent = "Kamera Aktif";
+    statusText.textContent =
+      "Tunjukkan benda ke kamera untuk deteksi otomatis.";
+
+    detectLoop();
+  } catch (error) {
+    console.error(error);
+    startBtn.disabled = false;
+    statusText.textContent =
+      "Kamera gagal dibuka. Izinkan akses kamera dan gunakan HTTPS.";
+  }
+};
+
+async function detectLoop() {
+  if (!running) return;
+
+  requestAnimationFrame(detectLoop);
+
+  if (
+    busy ||
+    video.readyState < 2 ||
+    video.videoWidth === 0
+  ) return;
+
+  busy = true;
+
+  try {
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    const objects = await model.detect(video, 10, 0.45);
+
+    ctx.clearRect(0, 0, width, height);
+
+    for (const obj of objects) {
+      const [x, y, w, h] = obj.bbox;
+
+      ctx.lineWidth = Math.max(2, width / 250);
+      ctx.strokeStyle = "#41ff91";
+      ctx.strokeRect(x, y, w, h);
+
+      const label =
+        obj.class + " " + (obj.score * 100).toFixed(0) + "%";
+
+      ctx.font = "bold 16px Arial";
+      const labelWidth = ctx.measureText(label).width + 12;
+
+      ctx.fillStyle = "#176b45";
+      ctx.fillRect(x, Math.max(0, y - 25), labelWidth, 25);
+
+      ctx.fillStyle = "white";
+      ctx.fillText(label, x + 6, Math.max(18, y - 7));
+    }
+
+    if (objects.length === 0) {
+      resultText.textContent = "Benda belum dikenali";
+      detailsText.textContent =
+        "Coba dekatkan benda dan gunakan pencahayaan yang cukup.";
+    } else {
+      const best = objects.reduce(
+        (a, b) => a.score > b.score ? a : b
+      );
+
+      resultText.textContent = "Benda: " + best.class;
+      detailsText.textContent =
+        "Keyakinan: " + (best.score * 100).toFixed(1) +
+        "%. Jumlah benda terdeteksi: " + objects.length +
+        ". Kategori sampah belum tentu dapat ditentukan oleh model umum ini.";
+    }
+  } catch (error) {
+    console.error(error);
+    statusText.textContent = "Deteksi terganggu. Mencoba kembali...";
+  } finally {
+    busy = false;
+  }
+}
+
+window.addEventListener("pagehide", () => {
+  running = false;
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+});
+
+loadAI();
+</script>
+</body>
+</html>
