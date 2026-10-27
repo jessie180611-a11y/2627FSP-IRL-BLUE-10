@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SortSmart AI — 200 Kategori Sampah</title>
+<style>
+:root{--green:#168451;--blue:#2267b8;--orange:#ad6415;--ink:#1e2b24;--muted:#637168;--line:#dce7df}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#f1f7f2;color:var(--ink);font-family:system-ui,Arial,sans-serif}
+header{text-align:center;margin:10px auto 22px}h1{margin:0;color:var(--green);font-size:clamp(1.8rem,5vw,2.5rem)}header p{color:var(--muted)}
+main{max-width:1050px;margin:auto;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 6px 22px #153d2410}
+h2{font-size:1.1rem;margin:0 0 12px}.camera{background:#17251d;aspect-ratio:4/3;border-radius:14px;overflow:hidden;display:grid;place-items:center;color:#d9e8de}
+video{display:none;width:100%;height:100%;object-fit:cover}.placeholder{padding:20px;text-align:center}
+button,select,input{font:inherit;border-radius:10px;padding:11px 13px;border:1px solid var(--line)}
+button{border:0;background:var(--green);color:white;font-weight:700;cursor:pointer;margin:8px 5px 0 0}button.secondary{background:#e8f4ec;color:#21543a}button:disabled{opacity:.5}
+#status{font-size:.88rem;color:var(--muted);line-height:1.5}#status.error{color:#b42318}
+.result{background:#f6faf7;border:1px solid var(--line);border-radius:13px;padding:15px;margin-top:12px;line-height:1.7;overflow-wrap:anywhere}
+.pill{display:inline-block;border-radius:999px;padding:5px 10px;font-size:.85rem;font-weight:800;background:#e7eee9}
+.organik{color:var(--green);background:#e4f6eb}.anorganik{color:var(--blue);background:#e6f0ff}.khusus{color:#9a5710;background:#fff0d9}
+.muted{font-size:.85rem;color:var(--muted);line-height:1.55}
+.list-controls{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+input,select{width:100%;background:white}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-weight:700}
+.category-list{max-height:330px;overflow:auto;padding-left:24px;font-size:.86rem;line-height:1.6}
+.warning{padding:12px;border-radius:12px;background:#fff5e5;color:#77501d;font-size:.83rem;line-height:1.5;margin-top:12px}
+@media(max-width:760px){main{grid-template-columns:1fr}body{padding:12px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>♻️ SortSmart AI</h1>
+  <p>Deteksi kamera dan referensi pemilahan 200 jenis sampah</p>
+</header>
+<main>
+<section class="panel">
+  <h2>📷 Kamera AI</h2>
+  <div class="camera">
+    <div id="placeholder" class="placeholder">📦<br>Aktifkan kamera, lalu tunjukkan satu benda dengan jelas.</div>
+    <video id="video" autoplay playsinline muted></video>
+  </div>
+  <button id="start">Aktifkan Kamera</button>
+  <button id="stop" class="secondary" disabled>Matikan Kamera</button>
+  <p id="status">Memuat model AI dari internet…</p>
+  <div class="result" aria-live="polite">
+    <strong>Objek terdeteksi:</strong> <span id="objek">Belum ada deteksi</span><br>
+    <strong>Perkiraan kategori:</strong> <span id="kategori" class="pill">Menunggu kamera</span><br>
+    <strong>Keyakinan model:</strong> <span id="score">—</span>
+    <p id="catatan" class="muted">Model dasar mengenali objek umum, bukan seluruh 200 jenis sampah. Gunakan daftar di bawah untuk mencari kategori secara manual.</p>
+  </div>
+  <div class="warning"><strong>Penting:</strong> baterai, lampu neon, limbah elektronik, toner/tinta, dan limbah berbahaya harus dipisahkan sebagai limbah khusus sesuai aturan setempat. Jangan masukkan ke tong sampah biasa. Pecahan kaca juga perlu wadah aman.</div>
+</section>
+
+<section class="panel">
+  <h2>🔎 Cari kategori sampah</h2>
+  <p class="muted">Cari nama benda dari daftar yang kamu berikan. Hasil pencarian ini adalah referensi kategori, bukan hasil pengenalan kamera.</p>
+  <div class="list-controls">
+    <input id="search" type="search" placeholder="Contoh: nasi kuning, baterai, botol plastik…">
+    <select id="filter">
+      <option value="semua">Semua kategori</option>
+      <option value="Organik">Organik</option>
+      <option value="Anorganik lunak">Anorganik lunak</option>
+      <option value="Anorganik keras">Anorganik keras</option>
+      <option value="Limbah khusus">Limbah khusus / B3</option>
+    </select>
+  </div>
+  <p id="count" class="muted">Memuat daftar…</p>
+  <div id="searchResults" class="category-list"></div>
+  <details>
+    <summary>Lihat seluruh daftar kategori</summary>
+    <div id="allLists"></div>
+  </details>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+const organic = [
+"Sisa nasi putih","Sisa nasi kuning","Sisa bubur ayam","Sisa mi instan","Sisa bihun goreng","Sisa kwetiau","Potongan daging ayam sisa","Tulang ayam","Tulang ikan","Duri ikan","Potongan daging sapi sisa","Tulang sapi kecil","Bakso sisa","Sosis sisa","Nugget sisa","Tahu goreng sisa","Tempe goreng sisa","Ampas tahu","Ampas kelapa","Sisa sayur sop","Sisa sayur bayam","Sisa sayur kangkung","Sisa tumis kacang panjang","Potongan timun","Potongan tomat","Daun selada","Kol atau kubis","Kulit bawang merah","Kulit bawang putih","Batang seledri","Batang daun bawang","Ampas teh celup","Daun teh tubruk bekas seduh","Ampas kopi hitam","Sisa es atau jus buah busuk",
+"Kulit pisang","Kulit jeruk","Kulit semangka","Kulit apel","Kulit pepaya","Kulit mangga","Kulit salak","Kulit alpukat","Kulit nangka","Kulit rambutan","Kulit durian","Kulit melon","Kulit pir","Biji pepaya","Biji mangga","Biji salak","Biji semangka","Biji jeruk","Daging buah busuk","Tangkai buah pisang","Tangkai buah anggur","Cangkang telur","Batang singkong rebus sisa","Kulit singkong","Kulit ubi jalar",
+"Daun kering gugur","Daun hijau segar rontok","Ranting pohon kecil","Dahan hasil pemangkasan","Rumput liar","Potongan rumput lapangan atau taman","Batang tanaman hias mati","Bunga layu dan gugur","Kelopak bunga kamboja","Mahkota bunga sepatu","Serasah atau serbuk kayu","Potongan kayu kecil","Kulit kayu mengelupas","Sabut kelapa","Tempurung kelapa","Bonggol jagung","Jerami atau tangkai padi","Serabut akar tanaman","Tanah humus bercampur sisa akar","Lumut dari tembok atau halaman",
+"Kotoran burung","Kotoran kucing","Kotoran ayam","Kotoran kelinci","Bangkai serangga","Bangkai cicak","Bangkai tikus kecil","Bulu ayam rontok","Sarang laba-laba atau serangga","Cangkang kepiting atau udang",
+"Kertas koran bekas bersih","Kertas HVS tanpa laminasi","Daun pisang pembungkus makanan","Daun jati pembungkus makanan","Kertas nasi cokelat polos tanpa lapisan sintetis tebal","Tusuk sate bambu","Tusuk gigi kayu","Batang es krim kayu","Kardus atau karton cokelat polos","Tisu makan berbahan serat alami"
+];
+const soft = [
+"Botol air mineral plastik","Gelas plastik bekas minuman","Sedotan plastik","Kantong plastik kresek","Bungkus makanan ringan","Bungkus permen dan cokelat","Plastik pembungkus roti atau biskuit","Tutup botol plastik","Plastic wrap","Bubble wrap","Plastik laminasi sampul buku","Pita kado sintetis","Kotak makan plastik sekali pakai","Sendok dan garpu plastik","Plastik mika wadah kue","Tali rafia","Sampul plastik buku tulis","Kartu pelajar berbahan PVC","Bolpoin atau pena bekas","Spidol bekas","Botol tipe-x cair","Gagang sikat gigi plastik","Sikat gigi bekas","Mainan plastik rusak","Pot bunga plastik rusak","Ember plastik rusak","Tempat pensil plastik rusak","Penggaris plastik patah","Isi binder plastik transparan","Kartu SIM bekas",
+"Kertas karbon","Kertas laminasi atau kertas kado metalik","Kertas minyak atau bungkus nasi berlapis plastik","Paper cup berlapis lilin atau plastik","Kotak susu atau jus Tetra Pak","Kardus berlapis aluminium foil","Struk belanja kertas termal","Sampul hardcover berlapis vinil","Amplop berjendela plastik","Wallpaper sisa","Poster berlaminasi","Kalender berpelapis dan ring kawat","Lakban atau solasi","Double tape","Stiker dan label nama",
+"Penghapus karet","Gelang karet","Sandal jepit karet","Sepatu olahraga berbahan karet atau sintetis","Bola karet rusak","Bola sepak atau futsal sintetis rusak","Tas atau jaket kulit sintetis","Selang air karet atau plastik","Karpet lantai karet sobek"
+];
+const hard = [
+"Kaleng minuman soda","Kaleng susu kental manis atau susu bubuk","Tutup botol logam","Aluminium foil","Wadah aluminium katering","Paku bekas","Paper clip logam","Staples atau hekter rusak","Kawat spiral buku","Sendok atau garpu logam rusak","Rangka besi meja atau kursi rusak","Kaki papan tulis logam","Gunting berkarat atau patah","Jangka besi rusak","Koin logam rusak","Tutup pensil logam","Seng sisa perbaikan","Pipa besi kecil","Gembok atau kunci rusak","Rantai besi kecil",
+"Botol kaca sirup atau minuman","Pecahan gelas kaca","Pecahan cangkir keramik","Pecahan piring","Bohlam lampu pijar putus","Lampu neon atau TL bekas","Pecahan kaca jendela","Cermin pecah","Botol kaca parfum atau minyak kayu putih","Toples kaca bekas","Kaca jam dinding pecah","Keramik lantai sisa renovasi","Lensa kacamata plastik atau kaca patah","Ban sepeda atau motor bekas"
+];
+const special = [
+"Baterai jam atau remote AC","Baterai ponsel atau gadget","Kabel charger rusak","Kabel listrik terkelupas","Headset atau earphone rusak","Mouse komputer rusak","Keyboard komputer rusak","Botol tinta printer atau toner bekas","Flashdisk atau kartu memori rusak","Kalkulator saku rusak","CD atau DVD bekas","Masker medis sekali pakai","Lampu neon atau TL bekas","Bohlam lampu pijar putus","Kotoran kucing atau hewan","Bangkai tikus kecil","Pecahan kaca tajam"
+];
+// Kategori khusus menang atas kategori material umum untuk limbah yang perlu penanganan aman.
+const all = [
+ ...organic.map(name=>({name,category:"Organik"})),
+ ...soft.map(name=>({name,category:"Anorganik lunak"})),
+ ...hard.map(name=>({name,category:"Anorganik keras"})),
+ ...special.map(name=>({name,category:"Limbah khusus"}))
+];
+const video=document.getElementById("video");
+const statusEl=document.getElementById("status");
+const objEl=document.getElementById("objek");
+const catEl=document.getElementById("kategori");
+const scoreEl=document.getElementById("score");
+const noteEl=document.getElementById("catatan");
+let model=null,stream=null,running=false,busy=false;
+
+function cssCategory(cat){
+ return cat==="Organik"?"organik":cat==="Anorganik lunak"?"anorganik":cat==="Anorganik keras"?"anorganik":"khusus";
+}
+function renderSearch(){
+ const q=document.getElementById("search").value.trim().toLowerCase();
+ const f=document.getElementById("filter").value;
+ const matches=all.filter(x=>(f==="semua"||x.category===f)&&x.name.toLowerCase().includes(q));
+ document.getElementById("count").textContent=`Menampilkan ${matches.length} dari ${all.length} entri kategori.`;
+ document.getElementById("searchResults").innerHTML=matches.slice(0,100).map(x=>
+  `<li><strong>${escapeHTML(x.name)}</strong> — <span class="${cssCategory(x.category)}">${escapeHTML(x.category)}</span></li>`
+ ).join("")||"<li>Tidak ada hasil. Coba kata kunci lain.</li>";
+}
+function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderAllLists(){
+ const groups=[["Organik",organic],["Anorganik lunak",soft],["Anorganik keras",hard],["Limbah khusus",special]];
+ document.getElementById("allLists").innerHTML=groups.map(([title,items])=>
+  `<h3>${title} (${items.length})</h3><ol class="category-list">${items.map(x=>`<li>${escapeHTML(x)}</li>`).join("")}</ol>`
+ ).join("");
+}
+document.getElementById("search").addEventListener("input",renderSearch);
+document.getElementById("filter").addEventListener("change",renderSearch);
+renderSearch();renderAllLists();
+
+async function loadModel(){
+ if(model)return model;
+ if(!window.cocoSsd||!window.tf)throw Error("Library AI gagal dimuat. Periksa internet.");
+ await tf.ready();
+ model=await cocoSsd.load({base:"lite_mobilenet_v2"});
+ return model;
+}
+async function startCamera(){
+ try{
+  document.getElementById("start").disabled=true;
+  statusEl.className="";
+  statusEl.textContent="Memuat model AI…";
+  await loadModel();
+  if(!navigator.mediaDevices?.getUserMedia)throw Error("Browser tidak mendukung kamera. Gunakan browser terbaru melalui HTTPS atau localhost.");
+  stopCamera();
+  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:"environment",width:{ideal:640},height:{ideal:480}}});
+  video.srcObject=stream;video.style.display="block";
+  document.getElementById("placeholder").style.display="none";
+  await video.play();
+  running=true;
+  document.getElementById("stop").disabled=false;
+  statusEl.textContent="Kamera aktif. Prediksi objek diperbarui otomatis.";
+  requestAnimationFrame(detect);
+ }catch(e){
+  statusEl.className="error";statusEl.textContent=e.message||"Kamera gagal dibuka. Periksa izin kamera.";
+  document.getElementById("start").disabled=false;
+ }
+}
+function stopCamera(){
+ running=false;
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+ video.srcObject=null;video.style.display="none";
+ document.getElementById("placeholder").style.display="block";
+ document.getElementById("stop").disabled=true;
+ document.getElementById("start").disabled=false;
+}
+document.getElementById("start").addEventListener("click",startCamera);
+document.getElementById("stop").addEventListener("click",stopCamera);
+
+function classifyCommonObject(label){
+ // Hanya label yang cukup relevan dipetakan. Model umum tidak mengenali semua nama dalam daftar.
+ const map={
+  banana:["Kulit/buah pisang (perkiraan)","Organik"],
+  apple:["Buah apel (perkiraan)","Organik"],
+  orange:["Buah jeruk (perkiraan)","Organik"],
+  broccoli:["Sayuran (perkiraan)","Organik"],
+  carrot:["Sayuran (perkiraan)","Organik"],
+  sandwich:["Sisa makanan (perkiraan)","Organik"],
+  pizza:["Sisa makanan (perkiraan)","Organik"],
+  donut:["Sisa makanan (perkiraan)","Organik"],
+  cake:["Sisa makanan (perkiraan)","Organik"],
+  bottle:["Botol — bahan belum pasti","Perlu diperiksa"],
+  cup:["Gelas/cangkir — bahan belum pasti","Perlu diperiksa"],
+  wine_glass:["Gelas kaca (perkiraan)","Anorganik keras"],
+  cell_phone:["Perangkat elektronik","Limbah khusus"],
+  remote:["Perangkat elektronik","Limbah khusus"],
+  keyboard:["Perangkat elektronik","Limbah khusus"],
+  mouse:["Perangkat elektronik","Limbah khusus"],
+  book:["Buku/kertas (perkiraan)","Anorganik lunak"]
+ };
+ return map[label]||null;
+}
+async function detect(){
+ if(!running||!model||busy)return;
+ if(video.readyState<2){requestAnimationFrame(detect);return;}
+ busy=true;
+ try{
+  const preds=await model.detect(video);
+  const p=preds.filter(x=>x.score>=0.55).sort((a,b)=>b.score-a.score)[0];
+  if(!p){
+   objEl.textContent="Belum dikenali";catEl.textContent="Coba lagi";catEl.className="pill";
+   scoreEl.textContent="—";noteEl.textContent="Dekatkan benda, gunakan pencahayaan terang, dan tampilkan satu benda.";
+  }else{
+   const label=p.class;
+   objEl.textContent=label.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+   scoreEl.textContent=Math.round(p.score*100)+"%";
+   const result=classifyCommonObject(label);
+   if(result){
+    catEl.textContent=result[1];catEl.className="pill "+(result[1]==="Organik"?"organik":result[1]==="Anorganik keras"?"anorganik":"khusus");
+    noteEl.textContent=result[0]+". Ini prediksi awal dari model umum; periksa benda secara langsung.";
+   }else{
+    catEl.textContent="Belum dapat dipastikan";catEl.className="pill";
+    noteEl.textContent="Model mengenali objek umum, tetapi tidak cukup informasi untuk menentukan kategori sampahnya.";
+   }
+  }
+ }catch(e){statusEl.className="error";statusEl.textContent="Deteksi mengalami kendala.";}
+ finally{busy=false;if(running)setTimeout(()=>requestAnimationFrame(detect),250);}
+}
+window.addEventListener("pagehide",()=>{running=false;if(stream)stream.getTracks().forEach(t=>t.stop());});
+</script>
+</body>
+</html>
