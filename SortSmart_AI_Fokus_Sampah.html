@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SortSmart AI — Deteksi Sampah Saja</title>
+<style>
+:root{--green:#21865b;--bg:#f2f8f4;--ink:#20352a;--muted:#65746b;--line:#dce8df}
+*{box-sizing:border-box}
+body{margin:0;padding:22px;font-family:system-ui,Arial,sans-serif;background:linear-gradient(150deg,#e9f7ed,#f7faf8 60%,#edf4ff);color:var(--ink)}
+main{max-width:900px;margin:auto}
+header{text-align:center;margin:10px 0 24px}
+.logo{font-size:36px}
+h1{margin:5px 0;color:var(--green);font-size:clamp(1.8rem,5vw,2.5rem)}
+p{line-height:1.5}
+.sub{color:var(--muted);max-width:650px;margin:8px auto}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 25px #1b42240d}
+h2{font-size:1.1rem;margin:0 0 14px}
+.stage{position:relative;aspect-ratio:4/3;background:#17221b;border-radius:14px;overflow:hidden;display:grid;place-items:center}
+video{display:none;width:100%;height:100%;object-fit:cover}
+canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#placeholder{color:#e3eee6;padding:24px;text-align:center}
+#placeholder span{display:block;font-size:42px;margin-bottom:10px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{border:0;border-radius:11px;padding:12px 15px;font-weight:700;cursor:pointer}
+.primary{background:var(--green);color:white}
+.secondary{background:#e5f3e9;color:#21583c}
+button:disabled{opacity:.45;cursor:not-allowed}
+#status{font-size:.88rem;color:var(--muted);margin:12px 0 0}
+#error{color:#b42318}
+.result{background:#f7faf8;border:1px solid var(--line);border-radius:14px;padding:15px}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+#objectName{font-size:1.4rem;font-weight:800;margin:6px 0 12px;overflow-wrap:anywhere}
+.pill{display:inline-block;border-radius:999px;padding:7px 11px;font-size:.85rem;font-weight:800;background:#edf0f2;color:#4e5b53}
+.org{background:#e4f6e9;color:#21865b}.hard{background:#e7f1ff;color:#2875c7}.soft{background:#fff0db;color:#a45b0c}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;margin-top:15px}
+.bar{height:8px;background:#e7eee8;border-radius:20px;overflow:hidden;margin-top:7px}
+#barFill{height:100%;width:0;background:var(--green);transition:width .2s}
+.note{font-size:.83rem;color:var(--muted);line-height:1.5}
+.categories{display:grid;gap:9px;margin-top:14px}
+.cat{padding:11px;border:1px solid var(--line);border-radius:12px;display:flex;gap:10px}
+.cat strong{display:block}.cat small{color:var(--muted);line-height:1.4}
+.warning{margin-top:14px;background:#fff5e4;color:#76501c;padding:12px;border-radius:12px;font-size:.82rem;line-height:1.5}
+@media(max-width:720px){body{padding:14px}.layout{grid-template-columns:1fr}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="logo">♻️</div>
+  <h1>SortSmart AI</h1>
+  <p class="sub">Pendeteksi sampah berbasis kamera. Hasil deteksi yang ditampilkan difokuskan pada kategori sampah, bukan manusia.</p>
+</header>
+
+<div class="layout">
+<section class="panel">
+  <h2>📷 Kamera Deteksi Sampah</h2>
+  <div class="stage">
+    <div id="placeholder"><span>🗑️</span>Aktifkan kamera, lalu tunjukkan sampah ke kamera.</div>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+  </div>
+  <div class="controls">
+    <button class="primary" id="start">Aktifkan Kamera</button>
+    <button class="secondary" id="switch" disabled>Ganti Kamera</button>
+    <button id="stop" disabled>Matikan Kamera</button>
+  </div>
+  <p id="status">Memuat model AI…</p>
+  <p class="note">Gunakan pencahayaan terang dan letakkan sampah di tengah kamera. Objek manusia tidak akan ditampilkan sebagai hasil.</p>
+</section>
+
+<aside class="panel">
+  <h2>🔎 Hasil Deteksi</h2>
+  <div class="result" aria-live="polite">
+    <div class="label">Objek sampah</div>
+    <div id="objectName">Belum ada deteksi</div>
+    <span id="category" class="pill">Menunggu kamera</span>
+    <div class="row"><span>Keyakinan model</span><strong id="confidence">—</strong></div>
+    <div class="bar"><div id="barFill"></div></div>
+    <p id="hint" class="note">Hasil muncul saat model menemukan objek yang dikenal dan dapat dipetakan.</p>
+  </div>
+
+  <div class="categories">
+    <div class="cat"><span>🍃</span><div><strong>Sampah Organik</strong><small>Sisa makanan, kulit buah/sayur, ampas kopi/teh, daun, rumput, ranting.</small></div></div>
+    <div class="cat"><span>🧱</span><div><strong>Anorganik Keras</strong><small>Kaca, logam, besi, kaleng, serta limbah elektronik.</small></div></div>
+    <div class="cat"><span>🧴</span><div><strong>Anorganik Lunak</strong><small>Plastik, styrofoam, kertas, kardus, karet, dan ban.</small></div></div>
+  </div>
+  <div class="warning"><strong>Keselamatan:</strong> baterai dan limbah elektronik perlu dikumpulkan sebagai limbah khusus. Pecahan kaca harus ditangani dengan aman.</div>
+</aside>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('overlay');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const startBtn = document.getElementById('start');
+const stopBtn = document.getElementById('stop');
+const switchBtn = document.getElementById('switch');
+const placeholder = document.getElementById('placeholder');
+const objectName = document.getElementById('objectName');
+const categoryEl = document.getElementById('category');
+const confidenceEl = document.getElementById('confidence');
+const barFill = document.getElementById('barFill');
+const hint = document.getElementById('hint');
+
+let model = null, stream = null, active = false, busy = false;
+let facing = 'environment', timer = null;
+
+// Pemetaan terbatas dari label yang memang dikenal COCO-SSD.
+// Model umum ini tidak dapat mengenali semua jenis sampah.
+const map = {
+  banana: {name:'Sampah Organik', cls:'org', note:'Kemungkinan buah atau kulit/potongan pisang. Pastikan benda memang akan dibuang.'},
+  apple: {name:'Sampah Organik', cls:'org', note:'Kemungkinan buah atau sisa buah.'},
+  orange: {name:'Sampah Organik', cls:'org', note:'Kemungkinan buah atau sisa buah.'},
+  broccoli: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sayur atau sisa sayuran.'},
+  carrot: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sayur atau sisa sayuran.'},
+  sandwich: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sisa makanan.'},
+  pizza: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sisa makanan.'},
+  donut: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sisa makanan.'},
+  cake: {name:'Sampah Organik', cls:'org', note:'Kemungkinan sisa makanan.'},
+  bottle: {name:'Periksa bahan botol', cls:'soft', note:'Model mengenali botol, tetapi tidak dapat memastikan plastik atau kaca.'},
+  book: {name:'Anorganik Lunak', cls:'soft', note:'Kemungkinan benda berbahan kertas; daur ulang jika bersih dan kering.'},
+  cell_phone: {name:'Anorganik Keras', cls:'hard', note:'Perangkat elektronik. Pisahkan sebagai limbah elektronik khusus.'},
+  keyboard: {name:'Anorganik Keras', cls:'hard', note:'Perangkat elektronik. Pisahkan sebagai limbah elektronik khusus.'},
+  mouse: {name:'Anorganik Keras', cls:'hard', note:'Perangkat elektronik. Pisahkan sebagai limbah elektronik khusus.'},
+  remote: {name:'Anorganik Keras', cls:'hard', note:'Perangkat elektronik. Pisahkan sebagai limbah elektronik khusus.'}
+};
+
+// Kelas manusia dan benda non-sampah tidak pernah ditampilkan.
+// Penyaringan ini mengatur hasil UI; model umum masih memproses frame kamera.
+const blocked = new Set([
+  'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+  'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
+  'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
+  'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
+  'backpack', 'umbrella', 'handbag', 'tie', 'suitcase'
+]);
+
+function setStatus(text, error=false) {
+  statusEl.textContent = text;
+  statusEl.id = error ? 'error' : 'status';
+}
+
+function clearOverlay() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function resetResult(message='Sampah belum dikenali. Coba dekatkan sampah ke kamera.') {
+  objectName.textContent = 'Belum ada sampah teridentifikasi';
+  categoryEl.className = 'pill';
+  categoryEl.textContent = 'Coba lagi';
+  confidenceEl.textContent = '—';
+  barFill.style.width = '0%';
+  hint.textContent = message;
+  clearOverlay();
+}
+
+function drawBox(prediction, category) {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return;
+  canvas.width = vw;
+  canvas.height = vh;
+  clearOverlay();
+  const [x,y,w,h] = prediction.bbox;
+  // Hanya kotak untuk objek yang lolos filter kategori sampah.
+  ctx.lineWidth = Math.max(3, vw/220);
+  ctx.strokeStyle = category.cls === 'org' ? '#31d47b' :
+                    category.cls === 'hard' ? '#5aa4ff' : '#ffb347';
+  ctx.strokeRect(x,y,w,h);
+  const label = category.name;
+  ctx.font = `bold ${Math.max(15, vw/35)}px Arial`;
+  const labelW = ctx.measureText(label).width + 16;
+  const labelH = Math.max(27, vw/28);
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.fillRect(x, Math.max(0,y-labelH), labelW, labelH);
+  ctx.fillStyle = '#102018';
+  ctx.fillText(label, x+8, Math.max(labelH-8,y-8));
+}
+
+function showPrediction(p) {
+  const entry = map[p.class];
+  if (!entry) {
+    resetResult('Objek terlihat, tetapi model ini belum bisa memastikan bahwa benda tersebut termasuk sampah. Coba model khusus sampah.');
+    return;
+  }
+  objectName.textContent = p.class.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  categoryEl.className = 'pill ' + entry.cls;
+  categoryEl.textContent = entry.name;
+  confidenceEl.textContent = Math.round(p.score*100) + '%';
+  barFill.style.width = Math.round(p.score*100) + '%';
+  hint.textContent = entry.note;
+  drawBox(p, entry);
+}
+
+async function loadModel() {
+  if (model) return model;
+  if (!window.tf || !window.cocoSsd) {
+    throw new Error('Library AI tidak berhasil dimuat. Periksa koneksi internet.');
+  }
+  setStatus('Memuat model AI…');
+  await tf.ready();
+  model = await cocoSsd.load({base:'lite_mobilenet_v2'});
+  setStatus('Model siap. Aktifkan kamera untuk mulai.');
+  return model;
+}
+
+async function startCamera() {
+  try {
+    startBtn.disabled = true;
+    await loadModel();
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Kamera memerlukan browser yang mendukung dan halaman HTTPS atau localhost.');
+    }
+    stopCamera(false);
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{facingMode:facing, width:{ideal:640}, height:{ideal:480}}
+    });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    placeholder.style.display = 'none';
+    await video.play();
+    active = true;
+    stopBtn.disabled = false;
+    switchBtn.disabled = false;
+    setStatus('Kamera aktif. Hanya hasil yang dipetakan sebagai sampah akan ditampilkan.');
+    detectLoop();
+  } catch (e) {
+    startBtn.disabled = false;
+    setStatus(e.message || 'Kamera gagal dibuka. Periksa izin kamera browser.', true);
+  }
+}
+
+function stopCamera(showMessage=true) {
+  active = false;
+  if (timer) clearTimeout(timer);
+  if (stream) stream.getTracks().forEach(t=>t.stop());
+  stream = null;
+  video.srcObject = null;
+  video.style.display = 'none';
+  placeholder.style.display = 'block';
+  stopBtn.disabled = true;
+  switchBtn.disabled = true;
+  startBtn.disabled = false;
+  clearOverlay();
+  if (showMessage) setStatus('Kamera dimatikan.');
+}
+
+async function detectLoop() {
+  if (!active || !model || busy) return;
+  if (video.readyState < 2) {
+    timer = setTimeout(detectLoop, 150);
+    return;
+  }
+  busy = true;
+  try {
+    const predictions = await model.detect(video);
+    // Abaikan kelas person dan semua kelas yang tidak dipetakan sebagai sampah.
+    // Jangan tampilkan label atau kotak untuk manusia maupun objek umum lainnya.
+    const candidates = predictions
+      .filter(p => p.score >= 0.55)
+      .filter(p => !blocked.has(p.class))
+      .filter(p => Object.prototype.hasOwnProperty.call(map,p.class))
+      .sort((a,b)=>(b.bbox[2]*b.bbox[3])-(a.bbox[2]*a.bbox[3]));
+
+    if (candidates.length) {
+      showPrediction(candidates[0]);
+    } else {
+      resetResult('Tidak ada sampah yang dikenali dari kelas yang didukung. Orang dan objek non-sampah tidak ditampilkan.');
+    }
+  } catch (e) {
+    setStatus('Terjadi kesalahan saat deteksi. Coba muat ulang halaman.', true);
+  } finally {
+    busy = false;
+    if (active) timer = setTimeout(detectLoop, 250);
+  }
+}
+
+startBtn.addEventListener('click', startCamera);
+stopBtn.addEventListener('click', ()=>stopCamera());
+switchBtn.addEventListener('click', async ()=>{
+  facing = facing === 'environment' ? 'user' : 'environment';
+  await startCamera();
+});
+window.addEventListener('pagehide', ()=>stopCamera(false));
+
+loadModel().catch(e=>setStatus(e.message || 'Model gagal dimuat.', true));
+</script>
+</body>
+</html>
