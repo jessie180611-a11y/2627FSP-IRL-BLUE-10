@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101d35">
+  <title>SMAK BPK PENABUR Holis | Excellence in Education</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            schoolNavy: '#14233F',
+            schoolRed: '#B52632',
+            schoolCream: '#F4F0E8',
+            schoolGray: '#6B7280',
+            schoolLine: '#D9DDE3',
+            schoolInk: '#202938'
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+            display: ['Manrope', 'sans-serif']
+          },
+          boxShadow: {
+            soft: '0 18px 55px rgba(20,35,63,.10)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; }
+    .hero-pattern {
+      background-image: linear-gradient(90deg, rgba(12,25,47,.94) 0%, rgba(12,25,47,.76) 48%, rgba(12,25,47,.35) 100%),
+        url('https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=2000&q=85');
+      background-size: cover;
+      background-position: center;
+    }
+    .eyebrow { letter-spacing: .18em; }
+    .section-rule { height: 3px; width: 44px; background: #B52632; }
+    .nav-link { transition: color .2s ease; }
+    .nav-link:hover { color: #B52632; }
+    .lift { transition: transform .25s ease, box-shadow .25s ease; }
+    .lift:hover { transform: translateY(-5px); box-shadow: 0 18px 45px rgba(20,35,63,.12); }
+
+    /* Subtle Chinese-inspired decorative details */
+    .chinese-lattice {
+      background-image:
+        linear-gradient(45deg, transparent 46%, rgba(181,38,50,.055) 47%, rgba(181,38,50,.055) 53%, transparent 54%),
+        linear-gradient(-45deg, transparent 46%, rgba(181,38,50,.055) 47%, rgba(181,38,50,.055) 53%, transparent 54%);
+      background-size: 28px 28px;
+    }
+    .seal-stamp {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 58px; height: 58px; border: 2px solid #B52632; color: #B52632;
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 25px;
+      outline: 1px solid rgba(181,38,50,.55); outline-offset: 4px;
+      transform: rotate(-7deg); letter-spacing: -.08em;
+    }
+    .ornamental-divider {
+      display: flex; align-items: center; gap: 12px; color: #B52632;
+      font-family: 'Manrope', sans-serif; font-size: 12px; letter-spacing: .35em;
+    }
+    .ornamental-divider::before, .ornamental-divider::after {
+      content: ''; display: block; height: 1px; width: 42px; background: #B52632; opacity: .55;
+    }
+    .cloud-corner {
+      position: absolute; right: 5%; top: 14%; width: 150px; height: 80px;
+      opacity: .28; pointer-events: none;
+    }
+    .cloud-corner::before, .cloud-corner::after {
+      content: ''; position: absolute; border: 1px solid #E7DCC9; border-radius: 999px;
+      transform: rotate(-12deg);
+    }
+    .cloud-corner::before { width: 105px; height: 34px; right: 0; top: 12px; }
+    .cloud-corner::after { width: 68px; height: 25px; right: 52px; top: 29px; }
+    .section-ornament { position: relative; }
+    .section-ornament::after {
+      content: '◇  ◇  ◇'; position: absolute; right: 0; bottom: 0;
+      color: #B52632; opacity: .18; font-size: 22px; letter-spacing: .45em;
+    }
+  </style>
+</head>
+<body class="bg-schoolCream text-schoolInk antialiased">
+  <!-- Navigation -->
+  <header class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-schoolNavy/95 text-white backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+      <a href="#home" class="flex items-center gap-3" aria-label="SMAK BPK PENABUR Holis beranda">
+        <div class="flex h-11 w-11 items-center justify-center rounded-md border border-white/30 bg-white text-schoolNavy font-display text-sm font-extrabold">BP</div>
+        <div class="leading-tight">
+          <span class="block font-display text-sm font-extrabold tracking-wide">BPK PENABUR</span>
+          <span class="block text-[10px] uppercase tracking-[.2em] text-white/65">Holis · Senior High School</span>
+        </div>
+      </a>
+      <button id="menuBtn" class="rounded border border-white/25 px-3 py-2 text-xs font-semibold uppercase tracking-widest md:hidden" aria-expanded="false" aria-controls="mobileNav">Menu</button>
+      <nav class="hidden items-center gap-8 text-xs font-semibold uppercase tracking-[.14em] md:flex">
+        <a class="nav-link" href="#about">Tentang</a>
+        <a class="nav-link" href="#program">Program</a>
+        <a class="nav-link" href="#life">Kehidupan Sekolah</a>
+        <a class="nav-link" href="#proposal">Proposal</a>
+        <a class="nav-link" href="#values">Keunggulan</a>
+        <a href="#contact" class="rounded-sm bg-schoolRed px-5 py-3 text-white transition hover:bg-red-800">Hubungi Kami</a>
+      </nav>
+    </div>
+    <nav id="mobileNav" class="hidden border-t border-white/10 bg-schoolNavy px-5 py-4 md:hidden">
+      <div class="flex flex-col gap-4 text-xs font-semibold uppercase tracking-widest">
+        <a href="#about">Tentang</a><a href="#program">Program</a><a href="#life">Kehidupan Sekolah</a><a href="#proposal">Proposal</a><a href="#values">Keunggulan</a><a href="#contact">Hubungi Kami</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <main>
+    <section id="home" class="hero-pattern relative flex min-h-[720px] items-center pt-24 text-white">
+      <div class="absolute inset-0 bg-schoolNavy/10"></div>
+      <div class="cloud-corner" aria-hidden="true"></div>
+      <div class="absolute bottom-24 right-8 hidden lg:block"><div class="seal-stamp">學</div></div>
+      <div class="relative mx-auto grid w-full max-w-7xl gap-12 px-5 py-24 lg:grid-cols-12 lg:px-8">
+        <div class="lg:col-span-8">
+          <p class="eyebrow mb-6 text-xs font-bold uppercase text-white/75">SMAK BPK PENABUR Holis · Bandung</p>
+          <h1 class="max-w-4xl font-display text-5xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl lg:text-7xl">
+            Membangun Generasi<br><span class="text-[#E7DCC9]">Unggul & Berkarakter.</span>
+          </h1>
+          <p class="mt-7 max-w-xl text-base leading-8 text-white/80 sm:text-lg">
+            Ruang untuk bertumbuh, berprestasi, dan menemukan potensi diri melalui pendidikan yang mendorong keunggulan akademik serta karakter.
+          </p>
+          <div class="mt-10 flex flex-wrap gap-4">
+            <a href="#about" class="bg-schoolRed px-7 py-4 text-xs font-bold uppercase tracking-[.16em] transition hover:bg-red-800">Jelajahi Sekolah</a>
+            <a href="#program" class="border border-white/60 px-7 py-4 text-xs font-bold uppercase tracking-[.16em] transition hover:bg-white hover:text-schoolNavy">Lihat Program</a>
+          </div>
+        </div>
+        <div class="hidden items-end justify-end lg:col-span-4 lg:flex">
+          <div class="max-w-xs border-l-2 border-schoolRed bg-schoolNavy/65 p-6 backdrop-blur-sm">
+            <p class="eyebrow text-[10px] font-bold uppercase text-white/60">Our commitment</p>
+            <p class="mt-3 font-display text-xl font-bold leading-snug">Learn with purpose. Lead with integrity.</p>
+          </div>
+        </div>
+      </div>
+      <div class="absolute bottom-0 left-0 h-2 w-full bg-schoolRed"></div>
+    </section>
+
+    <!-- Intro strip -->
+    <section class="bg-white chinese-lattice">
+      <div class="mx-auto max-w-7xl px-5 pt-7 lg:px-8"><div class="ornamental-divider justify-center">文 · 明 · 礼</div></div>
+      <div class="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:grid-cols-3 lg:px-8">
+        <div class="flex items-center gap-4"><span class="text-3xl font-display font-extrabold text-schoolRed">01</span><div><p class="font-display text-sm font-extrabold uppercase tracking-wide text-schoolNavy">Academic Excellence</p><p class="mt-1 text-xs text-schoolGray">Belajar dengan standar dan tujuan yang jelas.</p></div></div>
+        <div class="flex items-center gap-4"><span class="text-3xl font-display font-extrabold text-schoolRed">02</span><div><p class="font-display text-sm font-extrabold uppercase tracking-wide text-schoolNavy">Character Building</p><p class="mt-1 text-xs text-schoolGray">Menumbuhkan integritas, kepedulian, dan tanggung jawab.</p></div></div>
+        <div class="flex items-center gap-4"><span class="text-3xl font-display font-extrabold text-schoolRed">03</span><div><p class="font-display text-sm font-extrabold uppercase tracking-wide text-schoolNavy">Future Readiness</p><p class="mt-1 text-xs text-schoolGray">Mempersiapkan siswa menghadapi masa depan.</p></div></div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="py-24 lg:py-32">
+      <div class="mx-auto grid max-w-7xl items-center gap-14 px-5 lg:grid-cols-2 lg:px-8">
+        <div class="relative">
+          <img class="h-[430px] w-full object-cover shadow-soft" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=85" alt="Suasana kegiatan belajar siswa di lingkungan sekolah">
+          <div class="absolute -bottom-7 -right-3 max-w-[240px] bg-schoolNavy p-6 text-white sm:-right-7">
+            <p class="eyebrow text-[10px] font-bold uppercase text-white/60">SMAK BPK PENABUR Holis</p>
+            <p class="mt-2 font-display text-lg font-bold">Tempat potensi bertemu kesempatan.</p>
+          </div>
+        </div>
+        <div class="lg:pl-5">
+          <div class="section-rule mb-6"></div>
+          <p class="eyebrow text-xs font-bold uppercase text-schoolRed">Tentang Kami</p>
+          <div class="mt-5 mb-2 flex items-center gap-3 text-schoolRed/80"><span class="text-xl">❖</span><span class="text-[10px] font-bold tracking-[.35em]">學 · 成 · 長</span><span class="text-xl">❖</span></div>
+          <h2 class="mt-4 font-display text-4xl font-extrabold leading-tight text-schoolNavy sm:text-5xl">Pendidikan yang membentuk masa depan.</h2>
+          <p class="mt-6 leading-8 text-schoolGray">SMAK BPK PENABUR Holis hadir sebagai lingkungan pendidikan yang mendukung siswa untuk berkembang secara menyeluruh. Kami percaya bahwa proses belajar bukan hanya tentang pencapaian akademik, tetapi juga tentang membangun karakter, kreativitas, dan kepedulian.</p>
+          <p class="mt-4 leading-8 text-schoolGray">Melalui pengalaman belajar yang bermakna, siswa didorong untuk mengenali kekuatan diri, berani mencoba, dan siap mengambil peran positif di masyarakat.</p>
+          <a href="#values" class="mt-8 inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[.15em] text-schoolNavy hover:text-schoolRed">Kenali keunggulan kami <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Programs -->
+    <section id="program" class="bg-schoolNavy py-24 text-white lg:py-28">
+      <div class="mx-auto max-w-7xl px-5 lg:px-8">
+        <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div><div class="section-rule mb-6"></div><p class="eyebrow text-xs font-bold uppercase text-[#D9CBB7]">Learning Experience</p><h2 class="mt-4 font-display text-4xl font-extrabold sm:text-5xl">Belajar lebih bermakna.</h2></div>
+          <p class="max-w-md text-sm leading-7 text-white/65">Pengalaman sekolah yang memberi ruang bagi siswa untuk mengeksplorasi minat, mengasah kemampuan, dan bertumbuh bersama.</p>
+        </div>
+        <div class="mt-14 grid gap-5 md:grid-cols-3">
+          <article class="lift border border-white/15 bg-white/[.04] p-8">
+            <span class="text-sm font-bold text-[#D9CBB7]">01 / ACADEMIC</span><h3 class="mt-12 font-display text-2xl font-bold">Pembelajaran Akademik</h3><p class="mt-4 text-sm leading-7 text-white/65">Membangun pemahaman, kemampuan berpikir kritis, dan kebiasaan belajar yang positif.</p>
+          </article>
+          <article class="lift border border-white/15 bg-white/[.04] p-8">
+            <span class="text-sm font-bold text-[#D9CBB7]">02 / DEVELOPMENT</span><h3 class="mt-12 font-display text-2xl font-bold">Pengembangan Diri</h3><p class="mt-4 text-sm leading-7 text-white/65">Mendorong siswa mengenali minat dan mengembangkan potensi melalui beragam kegiatan.</p>
+          </article>
+          <article class="lift border border-white/15 bg-white/[.04] p-8">
+            <span class="text-sm font-bold text-[#D9CBB7]">03 / COMMUNITY</span><h3 class="mt-12 font-display text-2xl font-bold">Kolaborasi & Kepedulian</h3><p class="mt-4 text-sm leading-7 text-white/65">Melatih kerja sama, komunikasi, dan kontribusi positif dalam komunitas sekolah.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- School life -->
+    <section id="life" class="bg-white py-24 lg:py-28">
+      <div class="mx-auto max-w-7xl px-5 lg:px-8">
+        <div class="max-w-2xl"><div class="section-rule mb-6"></div><p class="eyebrow text-xs font-bold uppercase text-schoolRed">Beyond the Classroom</p><h2 class="mt-4 font-display text-4xl font-extrabold text-schoolNavy sm:text-5xl">Lebih dari sekadar ruang kelas.</h2><p class="mt-5 leading-8 text-schoolGray">Momen belajar hadir dalam banyak bentuk—mulai dari diskusi, kegiatan kreatif, kerja tim, hingga pengalaman yang membangun rasa percaya diri.</p></div>
+        <div class="mt-12 grid gap-5 md:grid-cols-12">
+          <div class="overflow-hidden md:col-span-7"><img class="h-[340px] w-full object-cover transition duration-700 hover:scale-[1.03]" src="https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=1200&q=85" alt="Siswa bekerja sama dalam kegiatan kelompok"></div>
+          <div class="overflow-hidden md:col-span-5"><img class="h-[340px] w-full object-cover transition duration-700 hover:scale-[1.03]" src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1000&q=85" alt="Siswa berdiskusi dan belajar bersama"></div>
+        </div>
+        <div class="mt-5 grid gap-5 md:grid-cols-3">
+          <div class="bg-schoolCream p-6"><p class="eyebrow text-[10px] font-bold uppercase text-schoolRed">Explore</p><h3 class="mt-3 font-display text-lg font-bold text-schoolNavy">Temukan minat</h3><p class="mt-2 text-sm leading-6 text-schoolGray">Berani mencoba hal baru dan mengembangkan rasa ingin tahu.</p></div>
+          <div class="bg-schoolCream p-6"><p class="eyebrow text-[10px] font-bold uppercase text-schoolRed">Collaborate</p><h3 class="mt-3 font-display text-lg font-bold text-schoolNavy">Tumbuh bersama</h3><p class="mt-2 text-sm leading-6 text-schoolGray">Belajar menghargai ide dan perspektif yang berbeda.</p></div>
+          <div class="bg-schoolCream p-6"><p class="eyebrow text-[10px] font-bold uppercase text-schoolRed">Achieve</p><h3 class="mt-3 font-display text-lg font-bold text-schoolNavy">Raih pencapaian</h3><p class="mt-2 text-sm leading-6 text-schoolGray">Mengapresiasi proses, usaha, dan perkembangan diri.</p></div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Proposal & Digital Projects -->
+    <section id="proposal" class="chinese-lattice bg-white py-24 lg:py-28">
+      <div class="mx-auto max-w-7xl px-5 lg:px-8">
+        <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div class="section-rule mb-6"></div>
+            <p class="eyebrow text-xs font-bold uppercase text-schoolRed">Proposal & Digital Showcase</p>
+            <h2 class="mt-4 max-w-2xl font-display text-4xl font-extrabold leading-tight text-schoolNavy sm:text-5xl">Rangkaian ide dan karya digital.</h2>
+          </div>
+          <p class="max-w-md text-sm leading-7 text-schoolGray">Kumpulan media interaktif dan konsep kegiatan bernuansa budaya Tionghoa sebagai bagian dari proposal program SMAK BPK PENABUR Holis.</p>
+        </div>
+        <div class="mt-12 grid gap-6 md:grid-cols-3">
+          <article class="lift flex flex-col border border-schoolLine bg-schoolCream p-7">
+            <div class="flex items-center justify-between"><span class="eyebrow text-[10px] font-bold uppercase text-schoolRed">01 · Interactive Learning</span><span class="text-2xl" aria-hidden="true">🎮</span></div>
+            <h3 class="mt-8 font-display text-2xl font-extrabold text-schoolNavy">Mandarin Master</h3>
+            <p class="mt-3 flex-1 text-sm leading-7 text-schoolGray">Permainan kuis interaktif untuk berlatih kosakata dan materi Mandarin tingkat HSK 3.</p>
+            <a href="https://jessie180611-a11y.github.io/2627FSP-IRL-BLUE-10/hsk3game.html" target="_blank" rel="noopener noreferrer" class="mt-7 inline-flex items-center justify-between border-t border-schoolLine pt-5 text-xs font-bold uppercase tracking-[.13em] text-schoolRed hover:text-schoolNavy">Buka media pembelajaran <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="lift flex flex-col border border-schoolLine bg-schoolCream p-7">
+            <div class="flex items-center justify-between"><span class="eyebrow text-[10px] font-bold uppercase text-schoolRed">02 · Proposal Reference</span><span class="text-2xl" aria-hidden="true">📑</span></div>
+            <h3 class="mt-8 font-display text-2xl font-extrabold text-schoolNavy">Dokumen Konsep</h3>
+            <p class="mt-3 flex-1 text-sm leading-7 text-schoolGray">Tautan referensi dan materi pendukung proposal yang dibagikan melalui Google Gemini.</p>
+            <a href="https://share.gemini.google/PTvZdF7SLdEK" target="_blank" rel="noopener noreferrer" class="mt-7 inline-flex items-center justify-between border-t border-schoolLine pt-5 text-xs font-bold uppercase tracking-[.13em] text-schoolRed hover:text-schoolNavy">Buka dokumen referensi <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="lift flex flex-col border border-schoolLine bg-schoolCream p-7">
+            <div class="flex items-center justify-between"><span class="eyebrow text-[10px] font-bold uppercase text-schoolRed">03 · Cultural Event</span><span class="text-2xl" aria-hidden="true">🏮</span></div>
+            <h3 class="mt-8 font-display text-2xl font-extrabold text-schoolNavy">Mooncake Festival</h3>
+            <p class="mt-3 flex-1 text-sm leading-7 text-schoolGray">Konsep halaman festival budaya yang mengenalkan tradisi, legenda, aktivitas, dan lomba Mooncake Festival Holis.</p>
+            <a href="https://jessie180611-a11y.github.io/2627FSP-IRL-BLUE-10/mooncake_festival_holis.html" target="_blank" rel="noopener noreferrer" class="mt-7 inline-flex items-center justify-between border-t border-schoolLine pt-5 text-xs font-bold uppercase tracking-[.13em] text-schoolRed hover:text-schoolNavy">Lihat konsep festival <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+        <div class="mt-8 flex items-center gap-3 text-xs leading-6 text-schoolGray"><span class="text-schoolRed" aria-hidden="true">✦</span><p>Setiap tautan akan terbuka di tab baru agar halaman utama sekolah tetap terbuka.</p></div>
+      </div>
+    </section>
+
+    <!-- Values -->
+    <section id="values" class="chinese-lattice bg-[#E9E5DC] py-24 lg:py-28">
+      <div class="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-2 lg:items-center lg:px-8">
+        <div>
+          <div class="section-rule mb-6"></div><p class="eyebrow text-xs font-bold uppercase text-schoolRed">Why PENABUR Holis</p>
+          <h2 class="mt-4 font-display text-4xl font-extrabold leading-tight text-schoolNavy sm:text-5xl">Bekal untuk melangkah lebih jauh.</h2>
+          <p class="mt-6 leading-8 text-schoolGray">Kami ingin setiap siswa memiliki fondasi pengetahuan dan karakter untuk menghadapi tantangan, mengambil keputusan dengan bijak, serta memberi dampak baik bagi sekitarnya.</p>
+        </div>
+        <div class="space-y-0 border-t border-schoolLine">
+          <div class="flex gap-6 border-b border-schoolLine py-6"><span class="font-display text-xl font-extrabold text-schoolRed">01</span><div><h3 class="font-display font-bold text-schoolNavy">Integritas</h3><p class="mt-1 text-sm text-schoolGray">Bertindak jujur dan bertanggung jawab.</p></div></div>
+          <div class="flex gap-6 border-b border-schoolLine py-6"><span class="font-display text-xl font-extrabold text-schoolRed">02</span><div><h3 class="font-display font-bold text-schoolNavy">Keunggulan</h3><p class="mt-1 text-sm text-schoolGray">Mengupayakan hasil terbaik melalui proses yang konsisten.</p></div></div>
+          <div class="flex gap-6 border-b border-schoolLine py-6"><span class="font-display text-xl font-extrabold text-schoolRed">03</span><div><h3 class="font-display font-bold text-schoolNavy">Kepedulian</h3><p class="mt-1 text-sm text-schoolGray">Menghargai sesama dan lingkungan sekitar.</p></div></div>
+          <div class="flex gap-6 border-b border-schoolLine py-6"><span class="font-display text-xl font-extrabold text-schoolRed">04</span><div><h3 class="font-display font-bold text-schoolNavy">Kolaborasi</h3><p class="mt-1 text-sm text-schoolGray">Berkembang melalui komunikasi dan kerja sama.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="contact" class="bg-schoolRed py-20 text-white">
+      <div class="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-5 md:flex-row md:items-center lg:px-8">
+        <div><p class="eyebrow text-xs font-bold uppercase text-white/70">Discover Your Potential</p><h2 class="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Mulai perjalanan masa depanmu.</h2><p class="mt-3 max-w-xl text-sm leading-7 text-white/80">Ingin mengetahui lebih lanjut tentang SMAK BPK PENABUR Holis? Hubungi pihak sekolah melalui kanal informasi resmi.</p></div>
+        <a href="https://bpkpenabur.or.id/" target="_blank" rel="noopener noreferrer" class="inline-flex shrink-0 items-center justify-center border border-white px-7 py-4 text-xs font-bold uppercase tracking-[.15em] transition hover:bg-white hover:text-schoolRed">Kunjungi Website PENABUR <span class="ml-3">↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-[#101B30] py-10 text-white">
+    <div class="mx-auto flex max-w-7xl flex-col gap-8 px-5 lg:px-8">
+      <div class="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+        <div class="flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center border border-white/30 font-display text-xs font-extrabold">BP</div><div><p class="font-display text-sm font-extrabold tracking-wide">SMAK BPK PENABUR HOLIS</p><p class="mt-1 text-[10px] uppercase tracking-[.18em] text-white/50">Education · Character · Excellence</p></div></div>
+        <a href="#home" class="text-xs font-semibold uppercase tracking-widest text-white/70 hover:text-white">Kembali ke atas ↑</a>
+      </div>
+      <div class="ornamental-divider justify-center text-[#D9CBB7] opacity-80">福 · 学 · 梦</div>
+      <div class="border-t border-white/15 pt-6 text-xs text-white/45">© 2026 SMAK BPK PENABUR Holis. Informasi pada halaman ini merupakan rancangan website sekolah.</div>
+    </div>
+  </footer>
+  <script>
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileNav = document.getElementById('mobileNav');
+    menuBtn.addEventListener('click', () => {
+      const isOpen = menuBtn.getAttribute('aria-expanded') === 'true';
+      menuBtn.setAttribute('aria-expanded', String(!isOpen));
+      mobileNav.classList.toggle('hidden');
+    });
+    mobileNav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+      mobileNav.classList.add('hidden');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }));
+  </script>
+</body>
+</html>
